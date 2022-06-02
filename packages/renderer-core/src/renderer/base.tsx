@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/prop-types */
 import classnames from 'classnames';
 import { create as createDataSourceEngine } from '@alilc/lowcode-datasource-engine/interpret';
@@ -154,8 +155,7 @@ export default function baseRendererFactory(): IBaseRenderComponent {
         this.__showPlaceholder = false;
         return resolve({});
       }
-      this.__dataHelper
-        .getInitData()
+      this.__dataHelper.getInitData()
         .then((res: any) => {
           this.__showPlaceholder = false;
           if (isEmpty(res)) {
@@ -286,8 +286,7 @@ export default function baseRendererFactory(): IBaseRenderComponent {
             // this.__showPlaceholder = false;
             return resolve({});
           }
-          this.__dataHelper
-            .getInitData()
+          this.__dataHelper.getInitData()
             .then((res: any) => {
               // this.__showPlaceholder = false;
               if (isEmpty(res)) {
@@ -463,8 +462,14 @@ export default function baseRendererFactory(): IBaseRenderComponent {
 
         if (!Comp) {
           console.error(`${schema.componentName} component is not found in components list! component list is:`, components || this.props.__container?.components);
-          Comp = engine.getNotFoundComponent();
-          otherProps.__componentName = schema.componentName;
+          return engine.createElement(
+            engine.getNotFoundComponent(),
+            {
+              componentName: schema.componentName,
+              componentId: schema.id,
+            },
+            this.__getSchemaChildrenVirtualDom(schema, scope, Comp),
+          );
         }
 
         // DesignMode 为 design 情况下，需要进入 leaf Hoc，进行相关事件注册
@@ -565,7 +570,7 @@ export default function baseRendererFactory(): IBaseRenderComponent {
             engine?.props?.onCompGetCtx(schema, scope);
           }
           props.key = props.key || `${schema.__ctx.lceKey}_${schema.__ctx.idx || 0}_${idx !== undefined ? idx : ''}`;
-        } else if (typeof idx === 'number' && !props.key) {
+        } else if ((typeof idx === 'number' || typeof idx === 'string') && !props.key) {
           // 仅当循环场景走这里
           props.key = idx;
         }
@@ -930,7 +935,7 @@ export default function baseRendererFactory(): IBaseRenderComponent {
 
       const buitin = capitalizeFirstLetter(this.__namespace);
       const componentNames = [buitin, ...extraComponents];
-      return !isSchema(schema, true) || !componentNames.includes(schema?.componentName ?? '');
+      return !isSchema(schema) || !componentNames.includes(schema?.componentName ?? '');
     };
 
     get requestHandlersMap() {

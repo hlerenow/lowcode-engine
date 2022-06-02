@@ -216,29 +216,11 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
       this.recordTime();
     }
 
-    get childrenMap(): any {
-      const map = new Map();
-
-      if (!this.hasChildren) {
-        return map;
-      }
-
-      this.children.forEach((d: any) => {
-        if (Array.isArray(d)) {
-          map.set(d[0].props.componentId, d);
-          return;
-        }
-        map.set(d.props.componentId, d);
-      });
-
-      return map;
-    }
-
     get defaultState() {
       const {
         hidden = false,
         condition = true,
-      } = this.leaf?.schema || {};
+      } = this.leaf?.export?.(TransformStage.Render) || {};
       return {
         nodeChildren: null,
         childrenInState: false,
@@ -253,14 +235,18 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
       super(props, context);
       // 监听以下事件，当变化时更新自己
       __debug(`${schema.componentName}[${this.props.componentId}] leaf render in SimulatorRendererView`);
-      clearRerenderEvent(this.props.componentId);
+      clearRerenderEvent(componentCacheId);
       const _leaf = this.leaf;
       this.initOnPropsChangeEvent(_leaf);
       this.initOnChildrenChangeEvent(_leaf);
       this.initOnVisibleChangeEvent(_leaf);
       this.curEventLeaf = _leaf;
 
-      let cacheState = cache.state.get(props.componentId);
+      cache.ref.set(componentCacheId, {
+        makeUnitRender: this.makeUnitRender,
+      });
+
+      let cacheState = cache.state.get(componentCacheId);
       if (!cacheState || cacheState.__tag !== props.__tag) {
         cacheState = this.defaultState;
       }
@@ -271,7 +257,7 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
     private curEventLeaf: Node | undefined;
 
     setState(state: any) {
-      cache.state.set(this.props.componentId, {
+      cache.state.set(componentCacheId, {
         ...this.state,
         ...state,
         __tag: this.props.__tag,
@@ -408,11 +394,12 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
         const node = leaf;
 
         if (key === '___condition___') {
-          const condition = parseData(newValue, scope);
+          const { condition = true } = this.leaf?.export(TransformStage.Render) || {};
+          const conditionValue = parseData(condition, scope);
           __debug(`key is ___condition___, change condition value to [${condition}]`);
           // 条件表达式改变
           this.setState({
-            condition,
+            condition: conditionValue,
           });
           return;
         }
@@ -484,7 +471,7 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
         // TODO: 缓存同级其他元素的 children。
         // 缓存二级 children Next 查询筛选组件有问题
         // 缓存一级 children Next Tab 组件有问题
-        const nextChild = getChildren(leaf?.export?.(TransformStage.Render) as types.ISchema, scope, Comp); // this.childrenMap
+        const nextChild = getChildren(leaf?.export?.(TransformStage.Render) as types.ISchema, scope, Comp);
         __debug(`${schema.componentName}[${this.props.componentId}] component trigger onChildrenChange event`, nextChild);
         this.setState({
           nodeChildren: nextChild,
@@ -526,7 +513,7 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
     }
 
     get leaf(): Node | undefined {
-      return this.props._leaf || getNode(this.props.componentId);
+      return this.props._leaf || getNode(componentCacheId);
     }
 
     render() {
@@ -557,7 +544,6 @@ export function leafWrapper(Comp: types.IBaseRenderComponent, {
     <LeafHoc
       {...props}
       forwardedRef={ref}
-      ref={(_ref: any) => cache.ref.set(props.componentId, _ref)}
     />
   ));
 

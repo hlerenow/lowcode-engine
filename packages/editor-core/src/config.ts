@@ -1,6 +1,9 @@
 import { ComponentType } from 'react';
 import { get as lodashGet } from 'lodash';
 import { isPlainObject } from '@alilc/lowcode-utils';
+
+import { RequestHandlersMap } from '@alilc/lowcode-datasource-types';
+
 import { getLogger } from './utils/logger';
 
 const logger = getLogger({ level: 'log', bizName: 'config' });
@@ -26,6 +29,11 @@ const VALID_ENGINE_OPTIONS = {
     enum: ['default', 'mobile', 'any string value'],
     default: 'default',
     description: '设备类型',
+  },
+  deviceClassName: {
+    type: 'string',
+    default: undefined,
+    description: '指定初始化的 deviceClassName，挂载到画布的顶层节点上',
   },
   locale: {
     type: 'string',
@@ -110,6 +118,10 @@ const VALID_ENGINE_OPTIONS = {
     type: 'array',
     description: '自定义 simulatorUrl 的地址',
   },
+  requestHandlersMap: {
+    type: 'object',
+    description: '数据源引擎的请求处理器映射',
+  },
 };
 export interface EngineOptions {
   /**
@@ -128,6 +140,10 @@ export interface EngineOptions {
    * 设备类型，默认值：'default'
    */
   device?: 'default' | 'mobile' | string;
+  /**
+   * 指定初始化的 deviceClassName，挂载到画布的顶层节点上
+   */
+  deviceClassName?: string;
   /**
    * 语言，默认值：'zh_CN'
    */
@@ -205,6 +221,20 @@ export interface EngineOptions {
     // 是否开启在 render 阶段开启 filter reducer，默认值：false
     enableFilterReducerInRenderStage?: boolean;
   };
+  /**
+   * 与 react-renderer 的 appHelper 一致，  https://lowcode-engine.cn/docV2/nhilce#appHelper
+   */
+  appHelper?: {
+    /** 全局公共函数 */
+    utils?: Record<string, any>;
+    /** 全局常量 */
+    constants?: Record<string, any>;
+  };
+
+  /**
+   * 数据源引擎的请求处理器映射
+   */
+  requestHandlersMap: RequestHandlersMap;
 }
 
 const getStrictModeValue = (engineOptions: EngineOptions, defaultValue: boolean): boolean => {
@@ -293,7 +323,7 @@ export class EngineConfig {
         if (isValidKey(key)) {
           this.set(key, engineOptions[key]);
         } else {
-          logger.warn(`failed to config ${key} to engineConfig, only predefined options can be set under strict mode, predefined options: ${VALID_ENGINE_OPTIONS}`);
+          logger.warn(`failed to config ${key} to engineConfig, only predefined options can be set under strict mode, predefined options: `, VALID_ENGINE_OPTIONS);
         }
       });
     } else {

@@ -25,6 +25,7 @@ import { createMemoryHistory, MemoryHistory } from 'history';
 import Slot from './builtin-components/slot';
 import Leaf from './builtin-components/leaf';
 import { withQueryParams, parseQuery } from './utils/url';
+import { merge } from 'lodash';
 
 const loader = new AssetLoader();
 configure({ enforceActions: 'never' });
@@ -264,7 +265,7 @@ export class SimulatorRendererContainer implements BuiltinSimulatorRenderer {
     });
     this.history = history;
     history.listen((location, action) => {
-      const docId = location.pathname.substr(1);
+      const docId = location.pathname.slice(1);
       docId && host.project.open(docId);
     });
     host.componentsConsumer.consume(async (componentsAsset) => {
@@ -308,6 +309,7 @@ export class SimulatorRendererContainer implements BuiltinSimulatorRenderer {
         ...this._appContext,
       };
       newCtx.utils.i18n.messages = data.i18n || {};
+      merge(newCtx, data.appHelper || {});
       this._appContext = newCtx;
     });
   }
@@ -428,8 +430,6 @@ export class SimulatorRendererContainer implements BuiltinSimulatorRenderer {
     const _schema: any = {
       ...compatibleLegaoSchema(schema),
     };
-    _schema.methods = {};
-    _schema.lifeCycles = {};
 
     if (schema.componentName === 'Component' && (schema as ComponentSchema).css) {
       const doc = window.document;
@@ -530,7 +530,10 @@ function cacheReactKey(el: Element): Element {
   if (REACT_KEY !== '') {
     return el;
   }
-  REACT_KEY = Object.keys(el).find((key) => key.startsWith('__reactInternalInstance$')) || '';
+  // react17 采用 __reactFiber 开头
+  REACT_KEY = Object.keys(el).find(
+    (key) => key.startsWith('__reactInternalInstance$') || key.startsWith('__reactFiber$'),
+  ) || '';
   if (!REACT_KEY && (el as HTMLElement).parentElement) {
     return cacheReactKey((el as HTMLElement).parentElement!);
   }

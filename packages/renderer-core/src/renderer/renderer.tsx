@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import adapter from '../adapter';
 import contextFactory from '../context';
-import { isFileSchema, goldlog, isEmpty } from '../utils';
+import { isFileSchema, isEmpty } from '../utils';
 import baseRendererFactory from './base';
 import divFactory from '../components/Div';
 import { IGeneralConstructor, IRenderComponent, IRendererProps, IRendererState } from '../types';
@@ -71,14 +71,6 @@ export default function rendererFactory(): IRenderComponent {
     }
 
     async componentDidMount() {
-      goldlog(
-        'EXP',
-        {
-          action: 'appear',
-          value: !!this.props.designMode,
-        },
-        'renderer',
-      );
       debug(`entry.componentDidMount - ${this.props.schema && this.props.schema.componentName}`);
     }
 
@@ -114,6 +106,9 @@ export default function rendererFactory(): IRenderComponent {
         return;
       }
       if (SetComponent.patchedCatch) {
+        return;
+      }
+      if (!SetComponent.prototype) {
         return;
       }
       SetComponent.patchedCatch = true;
