@@ -26,9 +26,8 @@ jobs:
         with:
           working-directory: packages/designer
           test-script: npm test -- --jest-ci --jest-json --jest-coverage --jest-testLocationInResults --jest-outputFile=report.json
-          skip-step: install
+          package-manager: yarn
           annotations: none
-          base-coverage-file: ./report.json
 
   cov-renderer-core:
     runs-on: ubuntu-latest
@@ -49,9 +48,8 @@ jobs:
         with:
           working-directory: packages/renderer-core
           test-script: npm test -- --jest-ci --jest-json --jest-coverage --jest-testLocationInResults --jest-outputFile=report.json
-          skip-step: install
+          package-manager: yarn
           annotations: none
-          base-coverage-file: ./report.json
 
   cov-react-simulator-renderer:
     runs-on: ubuntu-latest
@@ -72,6 +70,27 @@ jobs:
         with:
           working-directory: packages/react-simulator-renderer
           test-script: npm test -- --jest-ci --jest-json --jest-coverage --jest-testLocationInResults --jest-outputFile=report.json
-          skip-step: install
+          package-manager: yarn
           annotations: none
-          base-coverage-file: ./report.json
+
+  cov-utils:
+    runs-on: ubuntu-latest
+    # skip fork's PR, otherwise it fails while making a comment
+    if: ${{ github.event.pull_request.head.repo.full_name == 'alibaba/lowcode-engine' }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: install
+        run: npm i && npm run setup:skip-build
+
+      - uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: packages/utils
+          test-script: npm test -- --jest-ci --jest-json --jest-coverage --jest-testLocationInResults --jest-outputFile=report.json
+          package-manager: yarn
+          annotations: none

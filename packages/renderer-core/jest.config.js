@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { join } = require('path');
-const esModules = ['zen-logger'].join('|');
+const esModules = [].join('|');
 const pkgNames = fs.readdirSync(join('..')).filter(pkgName => !pkgName.startsWith('.'));
 
 const jestConfig = {
@@ -10,7 +10,8 @@ const jestConfig = {
   //   // '^.+\\.(js|jsx)$': 'babel-jest',
   // },
   // testMatch: ['(/tests?/.*(test))\\.[jt]s$'],
-  // testMatch: ['**/*/common.test.ts'],
+  // testMatch: ['**/*/base.test.tsx'],
+  // testMatch: ['**/utils/common.test.ts'],
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})/`,
   ],
